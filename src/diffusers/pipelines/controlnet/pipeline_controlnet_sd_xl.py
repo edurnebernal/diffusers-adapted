@@ -1047,6 +1047,7 @@ class StableDiffusionXLControlNetPipeline(
         negative_crops_coords_top_left: Tuple[int, int] = (0, 0),
         negative_target_size: Optional[Tuple[int, int]] = None,
         clip_skip: Optional[int] = None,
+        middle_res_only: Optional[Union [bool, List[bool]]] = False,
         callback_on_step_end: Optional[
             Union[Callable[[int, int, Dict], None], PipelineCallback, MultiPipelineCallbacks]
         ] = None,
@@ -1187,6 +1188,9 @@ class StableDiffusionXLControlNetPipeline(
             clip_skip (`int`, *optional*):
                 Number of layers to be skipped from CLIP while computing the prompt embeddings. A value of 1 means that
                 the output of the pre-final layer will be used for computing the prompt embeddings.
+            middle_res_only (`bool`, *optional*, defaults to `False`):
+                If `True`, the ControlNet is applied just in the middle block. If `False`, the ControlNet residuals
+                are applied through all the blocks.
             callback_on_step_end (`Callable`, `PipelineCallback`, `MultiPipelineCallbacks`, *optional*):
                 A function or a subclass of `PipelineCallback` or `MultiPipelineCallbacks` that is called at the end of
                 each denoising step during the inference. with the following arguments: `callback_on_step_end(self:
@@ -1506,6 +1510,9 @@ class StableDiffusionXLControlNetPipeline(
                     added_cond_kwargs=controlnet_added_cond_kwargs,
                     return_dict=False,
                 )
+
+                if middle_res_only:
+                    down_block_res_samples = [torch.zeros_like(d) for d in down_block_res_samples]
 
                 if guess_mode and self.do_classifier_free_guidance:
                     # Inferred ControlNet only for the conditional batch.
